@@ -1,0 +1,15 @@
+{
+    "id": "SCN-001",
+    "attackType": "brute_force",
+    "severity": "high",
+    "events": [
+        "15 failed login attempts from 192.168.1.50",
+        "Successful login from the same IP",
+        "New process started immediately after login"
+    ],
+    "groundTruth": {
+        "isAttack": true,
+        "classification": "brute_force",
+        "severity": "high"
+    }
+}
