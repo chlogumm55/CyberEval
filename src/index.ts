@@ -5,6 +5,11 @@ import { analyzeScenario } from "./ai/ollama.js";
 console.log("CyberEval Evaluation Test");
 console.log("=========================");
 
+let totalScore = 0;
+let attackCorrectCount = 0;
+let attackTypeCorrectCount = 0;
+let severityCorrectCount = 0;
+
 for (const scenario of scenarios) {
     console.log("");
     console.log("Analyzing:", scenario.id);
@@ -26,7 +31,53 @@ for (const scenario of scenarios) {
         console.log("   Severity Correct:", result.severityCorrect);
         console.log("   Score:", `${result.score * 100}%`);
 
+        totalScore += result.score;
+
+        if (result.attackCorrect) {
+            attackCorrectCount++;
+        }
+
+        if (result.attackTypeCorrect) {
+            attackTypeCorrectCount++;
+        }
+
+        if (result.severityCorrect) {
+            severityCorrectCount++;
+        }
+
     } catch (error) {
         console.error("Error analyzing scenario:", error);
     }
 }
+
+const scenarioCount = scenarios.length;
+
+const overallScore = totalScore / scenarioCount;
+const attackAccuracy = attackCorrectCount / scenarioCount;
+const attackTypeAccuracy = attackTypeCorrectCount / scenarioCount;
+const severityAccuracy = severityCorrectCount / scenarioCount;
+
+console.log("");
+console.log("=========================");
+console.log("CyberEval Overall Results");
+console.log("=========================");
+
+console.log(
+    "Overall Score:",
+    `${(overallScore * 100).toFixed(2)}%`
+);
+
+console.log(
+    "Attack Detection Accuracy:",
+    `${(attackAccuracy * 100).toFixed(2)}%`
+);
+
+console.log(
+    "Attack Type Accuracy:",
+    `${(attackTypeAccuracy * 100).toFixed(2)}%`
+);
+
+console.log(
+    "Severity Accuracy:",
+    `${(severityAccuracy * 100).toFixed(2)}%`
+);
