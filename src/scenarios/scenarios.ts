@@ -58,5 +58,76 @@ export const scenarios: SecurityScenario[] = [
             attackType: "normal",
             severity: "low"
         }
+    },
+
+    {
+        id: "SCN-004",
+        events: [
+            "A single external IP address contacted 200 different ports",
+            "Most connections attempts were unsuccessful",
+            "The activity occurred within a five-minute period"
+        ],
+        groundTruth: {
+            isAttack: true,
+            attackType: "port_scan",
+            severity: "medium"
+        }
+    },
+
+    {
+        id: "SCN-005",
+        events: [
+            "An unknown executable appeared on a workstation",
+            "The executable started without user interaction",
+            "The process attempted to connect to an unfamiliar external server"
+        ],
+        groundTruth: {
+            isAttack: true,
+            attackType: "malware",
+            severity: "high"
+        }
+    },
+
+    {
+        id: "SCN-006",
+        events: [
+            "A user received an email from an unfamiliar sender",
+            "The email contained an attachment",
+            "The attachment was blocked by the organization's email security system"
+        ],
+        groundTruth: {
+            isAttack: true,
+            attackType: "phishing",
+            severity: "medium"
+        }
+    },
+
+    {
+        id: "SCN-007",
+        events: [
+            "A server received several connection attempts from different IP addresses",
+            "The connections targeted a public web service",
+            "No successful authentication attempts occurred"
+        ],
+        groundTruth: {
+            isAttack: true,
+            attackType: "port_scan",
+            severity: "medium"
+        }
+    },
+
+    {
+        id: "SCN-008",
+        events: [
+            "A user logged in from their usual workstation",
+            "The login occurred during normal business hours",
+            "The user accessed files they normally work with",
+            "No unusual processes or network connections were detected"
+        ],
+        groundTruth: {
+            isAttack: false,
+            attackType: "normal",
+            severity: "low"
+        }
     }
 ];
