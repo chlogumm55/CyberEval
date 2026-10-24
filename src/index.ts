@@ -2,13 +2,23 @@ import { scenarios } from "./scenarios/scenarios.js";
 import { evaluatePrediction } from "./evaluation/evaluator.js";
 import { analyzeScenario } from "./ai/ollama.js";
 
-console.log("CyberEval Evaluation Test");
-console.log("=========================");
+console.log("CyberEval AI Evaluation");
+console.log("========================");
 
 let totalScore = 0;
 let attackCorrectCount = 0;
 let attackTypeCorrectCount = 0;
 let severityCorrectCount = 0;
+
+const errors: {
+    scenarioId: string;
+    attackTypeCorrect: boolean;
+    severityCorrect: boolean;
+    expectedAttackType: string;
+    predictedAttackType: string;
+    expectedSeverity: string;
+    predictedSeverity: string;
+}[] = [];
 
 for (const scenario of scenarios) {
     console.log("");
@@ -43,6 +53,23 @@ for (const scenario of scenarios) {
 
         if (result.severityCorrect) {
             severityCorrectCount++;
+        }
+
+        // Record any incorrect predictions
+        if (
+            !result.attackTypeCorrect ||
+            !result.severityCorrect ||
+            !result.attackCorrect
+        ) {
+            errors.push({
+                scenarioId: scenario.id,
+                attackTypeCorrect: result.attackTypeCorrect,
+                severityCorrect: result.severityCorrect,
+                expectedAttackType: scenario.groundTruth.attackType,
+                predictedAttackType: prediction.attackType,
+                expectedSeverity: scenario.groundTruth.severity,
+                predictedSeverity: prediction.severity
+            });
         }
 
     } catch (error) {
@@ -81,3 +108,37 @@ console.log(
     "Severity Accuracy:",
     `${(severityAccuracy * 100).toFixed(2)}%`
 );
+
+// Show errors
+console.log("");
+console.log("=========================");
+console.log("Prediction Errors");
+console.log("=========================");
+
+if (errors.length === 0) {
+    console.log("No prediction errors detected.");
+} else {
+    for (const error of errors) {
+        console.log("");
+        console.log("Scenario:", error.scenarioId);
+
+        if (!error.attackTypeCorrect) {
+            console.log(
+                "Attack Type:",
+                `Expected ${error.expectedAttackType},`,
+                `Predicted ${error.predictedAttackType}`
+            );
+        }
+
+        if (!error.severityCorrect) {
+            console.log(
+                "Severity:",
+                `Expected ${error.expectedSeverity},`,
+                `Predicted ${error.predictedSeverity}`
+            );
+        }
+    }
+}
+
+console.log("");
+console.log("Total Errors:", errors.length);
