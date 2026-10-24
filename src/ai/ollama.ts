@@ -16,64 +16,72 @@ export async function analyzeScenario(
 ): Promise<AIPrediction> {
 
     const prompt = `
-    You are a cybersecurity analysis AI.
+You are a cybersecurity analysis AI.
 
-    Analyze the following security scenario:
+Analyze the following security scenario:
 
-    ${scenario.events.map(event => `- ${event}`).join("\n")}
+${scenario.events.map(event => `- ${event}`).join("\n")}
 
-    Return ONLY valid JSON.
+Return ONLY valid JSON.
 
-    The JSON must use exactly this format:
+The JSON must use exactly this format:
 
-    {
-      "isAttack": true,
-      "attackType": "brute_force",
-      "severity": "high",
-      "confidence": 0.90
+{
+  "isAttack": true,
+  "attackType": "brute_force",
+  "severity": "high",
+  "confidence": 0.90
+}
+
+Rules:
+
+isAttack must be either true or false.
+
+attackType must be exactly one of:
+- brute_force
+- phishing
+- port_scan
+- malware
+- normal
+
+severity must be exactly one of:
+- low
+- medium
+- high
+- critical
+
+confidence must be a number between 0 and 1.
+
+Use confidence to represent how certain you are about the complete classification.
+
+Do not use ranges such as "medium to high".
+Do not include explanations outside the JSON.
+`;
+
+    let response: Response;
+
+    try {
+        response = await fetch(
+            "http://127.0.0.1:11434/api/generate",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "llama3.2:latest",
+                    prompt,
+                    stream: false,
+                    format: "json"
+                })
+            }
+        );
+    } catch (error) {
+        throw new Error(
+            "Could not connect to Ollama at http://127.0.0.1:11434. " +
+            "Make sure Ollama is running before starting CyberEval."
+        );
     }
-
-    Rules:
-
-    isAttack must be either true or false.
-
-    attackType must be exactly one of:
-    - brute_force
-    - phishing
-    - port_scan
-    - malware
-    - normal
-
-    severity must be exactly one of:
-    - low
-    - medium
-    - high
-    - critical
-
-    confidence must be a number between 0 and 1.
-
-    Use your confidence to represent how certain you are about the
-    complete classification.
-
-    Do not use ranges such as "medium to high".
-    Do not include explanations outside the JSON.
-    `;
-
-    const response = await fetch(
-        "http://localhost:11434/api/generate",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "llama3.2:latest",
-                prompt,
-                stream: false,
-                format: "json"
-            })
-        }
-    );
 
     if (!response.ok) {
         throw new Error(
@@ -83,7 +91,65 @@ export async function analyzeScenario(
 
     const data = await response.json();
 
-    const prediction: AIPrediction = JSON.parse(data.response);
+    if (!data.response) {
+        throw new Error(
+            "Ollama returned an empty response."
+        );
+    }
+
+    let prediction: AIPrediction;
+
+    try {
+        prediction = JSON.parse(data.response);
+    } catch {
+        throw new Error(
+            `Ollama returned invalid JSON: ${data.response}`
+        );
+    }
+
+    // Validate the AI response
+    if (typeof prediction.isAttack !== "boolean") {
+        throw new Error(
+            "Invalid AI response: isAttack must be true or false."
+        );
+    }
+
+    const validAttackTypes: AttackType[] = [
+        "brute_force",
+        "phishing",
+        "port_scan",
+        "malware",
+        "normal"
+    ];
+
+    if (!validAttackTypes.includes(prediction.attackType)) {
+        throw new Error(
+            `Invalid AI response: unknown attack type "${prediction.attackType}".`
+        );
+    }
+
+    const validSeverities: Severity[] = [
+        "low",
+        "medium",
+        "high",
+        "critical"
+    ];
+
+    if (!validSeverities.includes(prediction.severity)) {
+        throw new Error(
+            `Invalid AI response: unknown severity "${prediction.severity}".`
+        );
+    }
+
+    if (
+        typeof prediction.confidence !== "number" ||
+        prediction.confidence < 0 ||
+        prediction.confidence > 1
+    ) {
+        throw new Error(
+            "Invalid AI response: confidence must be a number between 0 and 1."
+        );
+    }
 
     return prediction;
 }
