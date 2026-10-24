@@ -76,7 +76,7 @@ Do not include explanations outside the JSON.
                 })
             }
         );
-    } catch (error) {
+    } catch {
         throw new Error(
             "Could not connect to Ollama at http://127.0.0.1:11434. " +
             "Make sure Ollama is running before starting CyberEval."
@@ -107,13 +107,6 @@ Do not include explanations outside the JSON.
         );
     }
 
-    // Validate the AI response
-    if (typeof prediction.isAttack !== "boolean") {
-        throw new Error(
-            "Invalid AI response: isAttack must be true or false."
-        );
-    }
-
     const validAttackTypes: AttackType[] = [
         "brute_force",
         "phishing",
@@ -122,18 +115,24 @@ Do not include explanations outside the JSON.
         "normal"
     ];
 
-    if (!validAttackTypes.includes(prediction.attackType)) {
-        throw new Error(
-            `Invalid AI response: unknown attack type "${prediction.attackType}".`
-        );
-    }
-
     const validSeverities: Severity[] = [
         "low",
         "medium",
         "high",
         "critical"
     ];
+
+    if (typeof prediction.isAttack !== "boolean") {
+        throw new Error(
+            "Invalid AI response: isAttack must be true or false."
+        );
+    }
+
+    if (!validAttackTypes.includes(prediction.attackType)) {
+        throw new Error(
+            `Invalid AI response: unknown attack type "${prediction.attackType}".`
+        );
+    }
 
     if (!validSeverities.includes(prediction.severity)) {
         throw new Error(
